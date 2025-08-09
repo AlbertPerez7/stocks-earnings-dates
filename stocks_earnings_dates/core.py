@@ -75,7 +75,7 @@ def list_all_tickers() -> List[str]:
     finally:
         if conn:
             conn.close()
-def get_earnings_price_reactions(ticker: str, min_days_ago: int = 120) -> List[dict]:
+def get_earnings_price_reactions(ticker: str, min_days_ago: int = 1) -> List[dict]:
     """
     Returns a list of dictionaries with earnings dates and percentage price movements:
         - Close→Next Open (%)
