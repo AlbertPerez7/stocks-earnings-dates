@@ -4,7 +4,6 @@ from typing import List, Optional
 from datetime import datetime
 import yfinance as yf
 import pandas as pd
-
 # Path to the SQLite database inside the package
 DB_PATH = os.path.join(os.path.dirname(__file__), 'data', 'earnings.db')
 
