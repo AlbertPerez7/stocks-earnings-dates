@@ -84,7 +84,6 @@ def get_earnings_price_reactions(ticker: str, min_days_ago: int = 1) -> List[dic
     Args:
         ticker (str): Stock ticker symbol.
         min_days_ago (int): Ignore earnings dates less than this many days ago.
-
     Returns:
         List[dict]: List of price movement info per earnings date.
     """
