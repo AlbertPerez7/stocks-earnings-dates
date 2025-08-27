@@ -1,33 +1,22 @@
-import pandas as pd
+# generate_db.py
 import sqlite3
+import pandas as pd
 from pathlib import Path
 
-# 1. Path to the CSV file
-csv_path = Path("merged_earnings.csv")
+# Paths
+CSV_PATH = Path(__file__).parent / "earnings_final.csv"
+DB_PATH = Path(__file__).parent / "stocks_earnings_dates" / "data" / "earnings.db"
 
-# 2. Output directory for the database file
-output_dir = Path("stocks_earnings_dates") / "data"
-output_dir.mkdir(parents=True, exist_ok=True)
+# Make sure the folder exists
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# 3. Load CSV into a DataFrame
-df = pd.read_csv(csv_path)
+# Read CSV
+df = pd.read_csv(CSV_PATH)
 
-# 4. Validate expected columns
-expected_cols = {"Ticker", "Earnings_Date"}
-if not expected_cols.issubset(df.columns):
-    raise ValueError(f"❌ The CSV must contain these columns: {expected_cols}")
+# Save to SQLite
+with sqlite3.connect(DB_PATH) as conn:
+    df.to_sql("earnings", conn, if_exists="replace", index=False)
 
-# 5. Convert Earnings_Date to datetime (optional but recommended)
-df["Earnings_Date"] = pd.to_datetime(df["Earnings_Date"])
-
-# 6. Create the SQLite database connection
-db_path = output_dir / "earnings.db"
-conn = sqlite3.connect(db_path)
-
-# 7. Save the DataFrame into the database as a table called "earnings"
-df.to_sql("earnings", conn, if_exists="replace", index=False)
-
-# 8. Close the connection
-conn.close()
-
-print(f"✅ Database successfully created at: {db_path}")
+print(f"✅ Database created at: {DB_PATH.resolve()}")
+print(f"   Source CSV: {CSV_PATH.resolve()}")
+print(f"   Rows written: {len(df)}")

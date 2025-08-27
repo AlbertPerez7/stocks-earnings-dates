@@ -2,7 +2,8 @@
 # 📈 stocks-earnings-dates
 
 A lightweight Python package to query **historical earnings release dates** for all stocks in the **S&P 500** and the **top 100 Nasdaq**.  
-It provides access to the last 10 years of earnings dates (or fewer, if the company is more recently listed).
+It provides access to the last 21 years of earnings dates, since the earnings was released as the Item 2.02 in the 8-K Reports (the number of earnings for stock is fewer if the company is more recently listed).
+
 
 ---
 
@@ -15,10 +16,37 @@ pip install stocks-earnings-dates --upgrade
 ```
 
 ---
+## Project structure
+
+```
+stocks-earnings-dates/
+├─ build/
+├─ dist/
+├─ edgar_earnings_pipeline/
+│  ├─ 8k-link-builder/
+│  │  ├─ EDGAR_8K_LINKS_GENERATOR.py
+│  │  └─ edgar_8k_links_only.csv
+│  ├─ earnings_item_2_02_scrapper/
+│  │  └─ scrapping_script.py
+│  ├─ ticker_cik_mapping/
+│  │  ├─ CIK_GENERATOR.py
+│  │  └─ tickers_with_cik.csv
+│  └─ earnings_final.csv
+├─ stocks_earnings_dates/
+│  ├─ data/
+│  │  └─ earnings.db
+│  ├─ __init__.py
+│  └─ core.py
+├─ stocks_earnings_dates.egg-info/
+├─ earnings_final.csv
+└─ generate_db.py
+```
+
+---
 
 ##  What’s Inside?
 
-This package uses a built-in SQLite database with over **21,000+ earnings dates** collected from public sources, organized by stock ticker.
+This package uses a built-in SQLite database with over **37,000+ earnings dates** collected from the public sources of SEC EDGAR
 
 You can easily:
 
@@ -75,22 +103,23 @@ Earnings Date: 2024-01-19, Close→Open: -0.89%, Close→Close: -1.25%, Open→C
 These values are automatically calculated using [`yfinance`](https://pypi.org/project/yfinance/).
 
 ---
+## Rebuild the DB
+
+```bash
+python generate_db.py
+```
 
 ## How It Works
 
 The earnings dates are stored locally in a **bundled SQLite database**. When using the price reaction function, the package:
 - Loads the dates from the local database
-- Downloads historical price data using `yfinance`
-- Calculates price changes around each earnings release
-
+- Fetches the daily stock price data surrounding those earnings dates from Yahoo Finance.
+- Calculates the percentage change from:
+  - **Previous Close → Next Open**
+  - **Previous Close → Next Close**
+  - **Next Open → Next Close**
+-“Previous Close” refers to the stock’s closing price just before the earnings release (typically after hours). “Next Open” is the price at market open the following day, and “Next Close” is the closing price on that same day.
 ---
-
-##  Data Source
-
-The earnings database was compiled from publicly accessible financial websites.  
-The CSV was cleaned, normalized and converted to a bundled SQLite database.
----
-
 ## ⚙️ Why SQLite?
 
 This package uses SQLite internally to optimize both speed and memory usage when querying earnings dates.
@@ -99,6 +128,23 @@ Instead of loading the entire `.csv` file into memory every time, only the subse
 This improves the efficiency when accessing multiple tickers.
 
 ---
+
+## Pipeline of Data extraction 
+
+How the scrapping links are created:
+
+For each stock in the tickers_with_cik.csv, the edgar_8k_links_generator creates 4 links for each stock's CIK 
+
+How Earnings Dates Are Detected:
+
+The scrapping code looks for SEC 8-K filings that report quarterly results (Item 2.02).
+
+For older filings (before Aug 23 2004), it also includes Item 12, the previous code for earnings releases.
+
+If more than one earnings-related 8-K is filed for the same quarter (e.g., corrections or updates), only the first filing within a 60-day window is kept to avoid duplicates.
+The earnings database was compiled from publicly accessible financial websites.  
+The CSV was cleaned, normalized and converted to a bundled SQLite database.
+
 
 ## Limitations
 
@@ -110,8 +156,15 @@ This improves the efficiency when accessing multiple tickers.
 ## Future Plans
 
 - Add EPS (expected vs actual) and calculate surprise %
-- Automatically update the database monthly from trusted sources
-- Add option to export earnings + reactions to CSV or DataFrame
+- Automatically update the database each quarter scrapping EDGAR 
+
+
+
+## Fair use
+
+- Set a real **User‑Agent** with contact email.  
+- Sleep between requests; do not hammer SEC EDGAR.  
+- Not affiliated with the SEC.
 
 ---
 
